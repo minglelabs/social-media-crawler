@@ -14,10 +14,16 @@ shadow.innerHTML = `
     button:hover{filter:brightness(1.15)}
     .toast{position:fixed;right:16px;bottom:16px;padding:10px 14px;border-radius:8px;background:#111;color:#fff;
       font:13px system-ui;display:none;pointer-events:none;max-width:320px}
+    .nudge{position:fixed;right:16px;bottom:64px;padding:12px 14px;border-radius:10px;background:#111;color:#fff;
+      font:13px system-ui;display:none;pointer-events:auto;max-width:300px;box-shadow:0 4px 16px rgba(0,0,0,.5)}
+    .nudge a{display:inline-block;margin:8px 8px 0 0;padding:6px 10px;border-radius:6px;background:#7c3aed;color:#fff;
+      text-decoration:none}
+    .nudge .x{position:absolute;top:4px;right:8px;cursor:pointer;opacity:.6}
   </style>
-  <button title="Download">⬇</button><div class="toast"></div>`;
+  <button title="Download">⬇</button><div class="toast"></div><div class="nudge"></div>`;
 const button = shadow.querySelector('button');
 const toast = shadow.querySelector('.toast');
+const nudgeBox = shadow.querySelector('.nudge');
 document.documentElement.append(host);
 
 let target = null;
@@ -72,6 +78,27 @@ function notify(text) {
   setTimeout(() => (toast.style.display = 'none'), 3500);
 }
 
+// One-time, dismissible ask after the first successful download.
+function showNudge({ github, review }) {
+  nudgeBox.replaceChildren();
+  const close = document.createElement('span');
+  close.className = 'x';
+  close.textContent = '✕';
+  close.onclick = () => (nudgeBox.style.display = 'none');
+  const text = document.createElement('div');
+  text.textContent = 'Saved! If this helped, a rating or a star helps others find it.';
+  nudgeBox.append(close, text);
+  for (const [label, href] of [review && ['Rate on Chrome Web Store', review], ['Star on GitHub', github]].filter(Boolean)) {
+    const a = document.createElement('a');
+    a.textContent = label;
+    a.href = href;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    nudgeBox.append(a);
+  }
+  nudgeBox.style.display = 'block';
+}
+
 button.addEventListener('click', async (e) => {
   e.preventDefault();
   e.stopPropagation();
@@ -88,6 +115,7 @@ button.addEventListener('click', async (e) => {
       permalink: permalink ?? null,
     });
     notify(res?.ok ? 'Saved ✓' : `Failed: ${res?.error ?? 'unknown error'}`);
+    if (res?.nudge) showNudge(res.nudge);
   } catch (err) {
     notify(`Failed: ${err.message}`);
   }

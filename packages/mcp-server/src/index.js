@@ -3,7 +3,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
-import { detectPlatform, listMedia, downloadMedia, doctor } from '@minglelabs/smc-core';
+import { detectPlatform, listMedia, downloadMedia, doctor, consumeNudge } from '@minglelabs/smc-core';
 import { checkReviews } from '@minglelabs/smc-review-monitor';
 
 const server = new McpServer({ name: 'social-media-crawler', version: '0.1.0' });
@@ -16,6 +16,15 @@ const guard = (fn) => async (args) => {
   } catch (err) {
     return fail(err);
   }
+};
+
+// After the first successful download, append a one-time note meant for the human user. It is returned as a
+// separate "for the user" text item so agents relay it rather than act on it.
+const withNudge = (guarded) => async (args) => {
+  const res = await guarded(args);
+  const notice = res.isError ? null : consumeNudge();
+  if (notice) res.content.push({ type: 'text', text: `Note for the user (informational, no action needed): ${notice}` });
+  return res;
 };
 
 const cookies = z.string().optional().describe('Browser to read login cookies from, e.g. "brave" or "chrome"');
@@ -38,16 +47,16 @@ server.tool(
   'download_media',
   'Download all media of a post URL to disk and return the saved file paths.',
   { url: z.string().url(), outDir: z.string().optional(), cookiesFromBrowser: cookies },
-  guard(({ url, outDir, cookiesFromBrowser }) => downloadMedia(url, { outDir, cookiesFromBrowser })),
+  withNudge(guard(({ url, outDir, cookiesFromBrowser }) => downloadMedia(url, { outDir, cookiesFromBrowser }))),
 );
 
 server.tool(
   'download_batch',
   'Download many post URLs. Failures are reported per URL and do not stop the batch.',
   { urls: z.array(z.string().url()).min(1).max(100), outDir: z.string().optional(), cookiesFromBrowser: cookies },
-  guard(async ({ urls, outDir, cookiesFromBrowser }) =>
+  withNudge(guard(async ({ urls, outDir, cookiesFromBrowser }) =>
     Promise.all(urls.map((url) => downloadMedia(url, { outDir, cookiesFromBrowser }).then((r) => ({ url, ...r }), (e) => ({ url, error: e.message })))),
-  ),
+  )),
 );
 
 server.tool(
