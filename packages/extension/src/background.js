@@ -1,3 +1,5 @@
+import { toNetscape } from './cookies.js';
+
 const NATIVE_HOST = 'com.minglelabs.social_media_crawler';
 const ROOT = 'SocialMediaCrawler';
 
@@ -10,6 +12,11 @@ function platformOf(url) {
   const host = new URL(url).hostname;
   if (host.includes('twitter.com')) return 'twitter';
   return Object.entries(PLATFORM_HOSTS).find(([, h]) => host.includes(h))?.[0] ?? 'misc';
+}
+
+// instagram.com for www.instagram.com, x.com for x.com; good enough for the supported sites.
+function registrableDomain(url) {
+  return new URL(url).hostname.split('.').slice(-2).join('.');
 }
 
 // Highest-resolution variant of a CDN image URL, where the CDN allows it without re-signing.
@@ -59,8 +66,11 @@ async function download(msg) {
     });
     return { ok: true, via: 'browser' };
   }
-  // Streams/blob media: hand the post URL to the local yt-dlp/gallery-dl helper.
-  return chrome.runtime.sendNativeMessage(NATIVE_HOST, { type: 'download', url: msg.permalink ?? msg.pageUrl });
+  // Streams/blob media: hand the post URL to the local yt-dlp/gallery-dl helper, together with this browser's
+  // login cookies for the site (Instagram reels/stories, private posts) so the helper sees what the user sees.
+  const url = msg.permalink ?? msg.pageUrl;
+  const cookies = toNetscape(await chrome.cookies.getAll({ domain: registrableDomain(url) }));
+  return chrome.runtime.sendNativeMessage(NATIVE_HOST, { type: 'download', url, cookies });
 }
 
 async function handle(msg) {

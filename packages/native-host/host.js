@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 // Chrome native messaging host: 4-byte little-endian length prefix + UTF-8 JSON, over stdin/stdout.
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { downloadMedia } from '@minglelabs/smc-core';
 
 function send(obj) {
@@ -11,11 +14,20 @@ function send(obj) {
 
 async function handle(msg) {
   if (msg?.type !== 'download' || typeof msg.url !== 'string') return { ok: false, error: 'bad request' };
+  let dir;
   try {
-    const result = await downloadMedia(msg.url, { cookiesFromBrowser: process.env.SMC_COOKIES_BROWSER });
+    const opts = { cookiesFromBrowser: process.env.SMC_COOKIES_BROWSER };
+    if (typeof msg.cookies === 'string' && msg.cookies) {
+      dir = fs.mkdtempSync(path.join(os.tmpdir(), 'smc-'));
+      opts.cookiesFile = path.join(dir, 'cookies.txt');
+      fs.writeFileSync(opts.cookiesFile, msg.cookies, { mode: 0o600 });
+    }
+    const result = await downloadMedia(msg.url, opts);
     return { ok: true, via: result.engine, files: result.files };
   } catch (err) {
     return { ok: false, error: err.message };
+  } finally {
+    if (dir) fs.rmSync(dir, { recursive: true, force: true });
   }
 }
 

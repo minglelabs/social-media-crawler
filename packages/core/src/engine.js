@@ -20,8 +20,10 @@ function run(cmd, args) {
   });
 }
 
-function cookieArgs(engine, browser) {
-  return browser ? ['--cookies-from-browser', browser] : [];
+// A cookies.txt (Netscape format) handed over by the extension wins over reading a browser's cookie store.
+function cookieArgs({ cookiesFile, cookiesFromBrowser }) {
+  if (cookiesFile) return ['--cookies', cookiesFile];
+  return cookiesFromBrowser ? ['--cookies-from-browser', cookiesFromBrowser] : [];
 }
 
 function enginesFor(url) {
@@ -36,7 +38,7 @@ function enginesFor(url) {
 
 async function listWith(engine, url, opts) {
   if (engine === 'yt-dlp') {
-    const r = await run('yt-dlp', ['-J', '--no-warnings', ...cookieArgs(engine, opts.cookiesFromBrowser), url]);
+    const r = await run('yt-dlp', ['-J', '--no-warnings', ...cookieArgs(opts), url]);
     if (r.code !== 0) throw new Error(r.stderr.trim().split('\n').pop() || 'yt-dlp failed');
     const info = JSON.parse(r.stdout);
     const entries = info.entries ?? [info];
@@ -47,7 +49,7 @@ async function listWith(engine, url, opts) {
       pageUrl: e.webpage_url ?? url,
     }));
   }
-  const r = await run('gallery-dl', ['-j', ...cookieArgs(engine, opts.cookiesFromBrowser), url]);
+  const r = await run('gallery-dl', ['-j', ...cookieArgs(opts), url]);
   if (r.code !== 0) throw new Error(r.stderr.trim().split('\n').pop() || 'gallery-dl failed');
   // gallery-dl -j emits [[2, {...}], [3, "https://...", {...}], ...]; type 3 = file URL.
   return JSON.parse(r.stdout)
@@ -66,12 +68,12 @@ async function downloadWith(engine, url, opts) {
     const r = await run('yt-dlp', [
       '-o', path.join(outDir, '%(extractor)s', '%(uploader)s_%(id)s.%(ext)s'),
       '--no-warnings', '--print', 'after_move:filepath',
-      ...cookieArgs(engine, opts.cookiesFromBrowser), url,
+      ...cookieArgs(opts), url,
     ]);
     if (r.code !== 0) throw new Error(r.stderr.trim().split('\n').pop() || 'yt-dlp failed');
     return r.stdout.split('\n').map((l) => l.trim()).filter(Boolean);
   }
-  const r = await run('gallery-dl', ['-d', outDir, ...cookieArgs(engine, opts.cookiesFromBrowser), url]);
+  const r = await run('gallery-dl', ['-d', outDir, ...cookieArgs(opts), url]);
   if (r.code !== 0) throw new Error(r.stderr.trim().split('\n').pop() || 'gallery-dl failed');
   // Skipped (already downloaded) files are prefixed with "# ".
   return r.stdout.split('\n').map((l) => l.replace(/^# /, '').trim()).filter(Boolean);
