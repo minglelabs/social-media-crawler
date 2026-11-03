@@ -11,7 +11,7 @@
       "matches": [
         "https://*.instagram.com/*", "https://*.youtube.com/*", "https://*.tiktok.com/*",
         "https://*.facebook.com/*", "https://x.com/*", "https://twitter.com/*",
-        "https://*.pinterest.com/*", "https://*.threads.com/*", "https://*.threads.net/*"
+        "https://*.pinterest.com/*", "https://*.linkedin.com/*", "https://*.threads.com/*", "https://*.threads.net/*"
       ],
       "js": ["src/content.js"],
       "run_at": "document_idle"

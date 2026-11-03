@@ -3,7 +3,7 @@ const ROOT = 'SocialMediaCrawler';
 
 const PLATFORM_HOSTS = {
   instagram: 'instagram.com', youtube: 'youtube.com', tiktok: 'tiktok.com', facebook: 'facebook.com',
-  twitter: 'x.com', pinterest: 'pinterest.com', threads: 'threads.',
+  twitter: 'x.com', pinterest: 'pinterest.com', threads: 'threads.', linkedin: 'linkedin.com',
 };
 
 function platformOf(url) {
