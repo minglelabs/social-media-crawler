@@ -2,6 +2,7 @@
 
 ## 2026-11-03
 
+- fix(threads): download button now appears on feed images (Threads made images unclickable under an overlay layer)
 - feat(linkedin): LinkedIn support (images/videos overlay, video via yt-dlp)
 - feat: one-time, dismissible rate/star prompt after the first download
 - feat: Chrome Web Store review monitor that reports "no longer works" reviews daily

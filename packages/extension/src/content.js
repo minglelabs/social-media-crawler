@@ -41,6 +41,26 @@ function isMedia(el) {
   return Boolean(mediaSource(el)) || el instanceof HTMLVideoElement;
 }
 
+// Sites put transparent layers above media, and some (Threads) make the <img> itself unhittable, so
+// elementsFromPoint can miss it. Fall back to comparing the pointer with every media element's rectangle.
+function mediaAt(x, y) {
+  const hit = document.elementsFromPoint(x, y).find(isMedia);
+  if (hit) return hit;
+  let best = null;
+  let bestArea = Infinity;
+  for (const el of document.querySelectorAll('img, video')) {
+    if (!isMedia(el)) continue;
+    const r = el.getBoundingClientRect();
+    if (x < r.left || x > r.right || y < r.top || y > r.bottom) continue;
+    const area = r.width * r.height;
+    if (area < bestArea) {
+      best = el;
+      bestArea = area;
+    }
+  }
+  return best;
+}
+
 function show(el) {
   target = el;
   clearTimeout(hideTimer);
@@ -63,8 +83,7 @@ document.addEventListener('mousemove', (e) => {
   ticking = true;
   requestAnimationFrame(() => {
     ticking = false;
-    // Overlay layers sit above <img>/<video> on most sites, so look at everything under the pointer.
-    const el = document.elementsFromPoint(e.clientX, e.clientY).find(isMedia);
+    const el = mediaAt(e.clientX, e.clientY);
     if (el) show(el);
     else if (target) hide();
   });
