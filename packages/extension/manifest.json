@@ -4,17 +4,46 @@
   "version": "0.1.1",
   "description": "One-click download button on every image and video on Instagram, YouTube, TikTok, Facebook, X, Pinterest and Threads.",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxD5/QZQFzUpaZc5wI9Jhjys89MX2OzVRXG7VMXo+qnlrNiU45hZucN5Q5v5VpZQtN9xlPXPgiWIbVoi9zlyKmfpO+RdO1gcz+UdBKIviO9+duDFH8AiUmSMtzy0bKcVNY36rJT0eoM7z139RiOl1w+l1uiISYTs7fz6YJNHqXD8fWCAp0Hj3o6ldOI+Iodfu3Z5ffYunQGq1pisJ1vY4VjhBWrkCwlssJde68xaVCaJVUZMQVBKcepNH0r+obmd5pWQQ8EF9Hbrl916aD8c8rJctZoIaea1xonypWftCnm7bVE0t4LcYUolte9qq/omUzPE5ZQ+vRQ5gN3BSiI/KGQIDAQAB",
-  "permissions": ["downloads", "nativeMessaging", "storage"],
-  "background": { "service_worker": "src/background.js", "type": "module" },
+  "permissions": [
+    "downloads",
+    "nativeMessaging",
+    "storage",
+    "cookies"
+  ],
+  "background": {
+    "service_worker": "src/background.js",
+    "type": "module"
+  },
   "content_scripts": [
     {
       "matches": [
-        "https://*.instagram.com/*", "https://*.youtube.com/*", "https://*.tiktok.com/*",
-        "https://*.facebook.com/*", "https://x.com/*", "https://twitter.com/*",
-        "https://*.pinterest.com/*", "https://*.linkedin.com/*", "https://*.threads.com/*", "https://*.threads.net/*"
+        "https://*.instagram.com/*",
+        "https://*.youtube.com/*",
+        "https://*.tiktok.com/*",
+        "https://*.facebook.com/*",
+        "https://x.com/*",
+        "https://twitter.com/*",
+        "https://*.pinterest.com/*",
+        "https://*.linkedin.com/*",
+        "https://*.threads.com/*",
+        "https://*.threads.net/*"
       ],
-      "js": ["src/content.js"],
+      "js": [
+        "src/content.js"
+      ],
       "run_at": "document_idle"
     }
+  ],
+  "host_permissions": [
+    "https://*.instagram.com/*",
+    "https://*.youtube.com/*",
+    "https://*.tiktok.com/*",
+    "https://*.facebook.com/*",
+    "https://x.com/*",
+    "https://twitter.com/*",
+    "https://*.pinterest.com/*",
+    "https://*.linkedin.com/*",
+    "https://*.threads.com/*",
+    "https://*.threads.net/*"
   ]
 }

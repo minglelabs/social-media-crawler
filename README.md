@@ -9,6 +9,7 @@ plus a tool-calling harness (MCP server + CLI) so agents can do the same without
 Platforms change their UI all the time; we track those changes and ship fixes continuously. Full history: [CHANGELOG.md](CHANGELOG.md) · [Releases](https://github.com/minglelabs/social-media-crawler/releases)
 
 <!-- LATEST-UPDATES:START -->
+- **2026-11-03** — fix(instagram): reels and stories now download; the helper receives this browser's login cookies
 - **2026-11-03** — chore(release): v0.1.1 — Threads, LinkedIn, YouTube Shorts, Facebook Reels, X, Pinterest, TikTok verified end to end in Brave
 - **2026-11-03** — fix(threads): download button now appears on feed images (Threads made images unclickable under an overlay layer)
 - **2026-11-03** — feat(linkedin): LinkedIn support (images/videos overlay, video via yt-dlp)
