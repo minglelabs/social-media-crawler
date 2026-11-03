@@ -1,6 +1,7 @@
 // One overlay button for every image/video on the page. No other choices are shown to the user.
 const MIN_SIZE = 160;
 const SKIP_ALT = /profile|avatar|프로필|プロフィール/i;
+const VIDEO_LINK = /\/(video|reel|reels|shorts)\/|watch\?v=/;
 const PERMALINK = 'a[href*="/post/"], a[href*="/p/"], a[href*="/reel/"], a[href*="/status/"], a[href*="/video/"], a[href*="/pin/"], a[href*="watch?v="], a[href*="/shorts/"], a[href*="/feed/update/"], a[href*="/posts/"]';
 
 const host = document.createElement('div');
@@ -118,6 +119,25 @@ function showNudge({ github, review }) {
   nudgeBox.style.display = 'block';
 }
 
+// Last resort for streams only the page can read: play the element once and save the captured stream.
+async function recordVideo(video) {
+  const stream = video.captureStream();
+  const rec = new MediaRecorder(stream, { mimeType: 'video/webm' });
+  const chunks = [];
+  rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+  const stopped = new Promise((r) => (rec.onstop = r));
+  video.currentTime = 0;
+  rec.start();
+  await video.play();
+  await new Promise((r) => video.addEventListener('ended', r, { once: true }));
+  rec.stop();
+  await stopped;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(chunks, { type: 'video/webm' }));
+  a.download = `SocialMediaCrawler-${Date.now()}.webm`;
+  a.click();
+}
+
 button.addEventListener('click', async (e) => {
   e.preventDefault();
   e.stopPropagation();
@@ -125,14 +145,23 @@ button.addEventListener('click', async (e) => {
   const el = target;
   const permalink = el.closest('article, [data-pressable-container], [role="article"]')?.querySelector(PERMALINK)?.href;
   notify('Downloading…');
+  // A cover image on a video link (TikTok/YouTube/Reels grids) stands for the video, not for the picture itself.
+  const isVideo = el instanceof HTMLVideoElement || VIDEO_LINK.test(permalink ?? '');
   try {
     const res = await chrome.runtime.sendMessage({
       type: 'download',
-      kind: el instanceof HTMLVideoElement ? 'video' : 'image',
-      mediaUrl: mediaSource(el),
+      kind: isVideo ? 'video' : 'image',
+      mediaUrl: el instanceof HTMLVideoElement || !isVideo ? mediaSource(el) : null,
       pageUrl: location.href,
       permalink: permalink ?? null,
     });
+    if (!res?.ok && el instanceof HTMLVideoElement && el.src.startsWith('blob:')) {
+      // The helper cannot resolve some in-page streams (LinkedIn); record what the player is showing instead.
+      notify('Recording…');
+      await recordVideo(el);
+      notify('Saved ✓');
+      return;
+    }
     notify(res?.ok ? 'Saved ✓' : `Failed: ${res?.error ?? 'unknown error'}`);
     if (res?.nudge) showNudge(res.nudge);
   } catch (err) {
