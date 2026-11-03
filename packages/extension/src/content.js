@@ -1,7 +1,7 @@
 // One overlay button for every image/video on the page. No other choices are shown to the user.
 const MIN_SIZE = 160;
 const SKIP_ALT = /profile|avatar|프로필|プロフィール/i;
-const PERMALINK = 'a[href*="/post/"], a[href*="/p/"], a[href*="/reel/"], a[href*="/status/"], a[href*="/video/"], a[href*="/pin/"], a[href*="watch?v="], a[href*="/shorts/"]';
+const PERMALINK = 'a[href*="/post/"], a[href*="/p/"], a[href*="/reel/"], a[href*="/status/"], a[href*="/video/"], a[href*="/pin/"], a[href*="watch?v="], a[href*="/shorts/"], a[href*="/feed/update/"], a[href*="/posts/"]';
 
 const host = document.createElement('div');
 host.style.cssText = 'position:fixed;inset:0;z-index:2147483647;pointer-events:none';

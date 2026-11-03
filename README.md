@@ -1,7 +1,19 @@
 # Social Media Crawler
 
-One download button on every image and video of Instagram, YouTube, TikTok, Facebook, X, Pinterest and Threads,
+One download button on every image and video of Instagram, YouTube, TikTok, Facebook, X, Pinterest, LinkedIn and Threads,
 plus a tool-calling harness (MCP server + CLI) so agents can do the same without a human.
+
+
+## Latest updates
+
+Platforms change their UI all the time; we track those changes and ship fixes continuously. Full history: [CHANGELOG.md](CHANGELOG.md) · [Releases](https://github.com/minglelabs/social-media-crawler/releases)
+
+<!-- LATEST-UPDATES:START -->
+- **2026-11-03** — feat(linkedin): LinkedIn support (images/videos overlay, video via yt-dlp)
+- **2026-11-03** — feat: one-time, dismissible rate/star prompt after the first download
+- **2026-11-03** — feat: Chrome Web Store review monitor that reports "no longer works" reviews daily
+- **2026-11-03** — feat: initial release — one-click overlay download for Instagram, YouTube, TikTok, Facebook, X, Pinterest, Threads; MCP + CLI harness
+<!-- LATEST-UPDATES:END -->
 
 ## Packages
 

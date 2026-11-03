@@ -6,6 +6,8 @@ export const PLATFORMS = {
   facebook: { hosts: ['facebook.com', 'fb.watch'], engines: ['yt-dlp', 'gallery-dl'] },
   twitter: { hosts: ['twitter.com', 'x.com'], engines: ['gallery-dl', 'yt-dlp'] },
   pinterest: { hosts: ['pinterest.com', 'pin.it'], engines: ['gallery-dl', 'yt-dlp'] },
+  // yt-dlp covers LinkedIn video; images come from the extension's direct-URL path.
+  linkedin: { hosts: ['linkedin.com', 'lnkd.in'], engines: ['yt-dlp'] },
   // Neither yt-dlp nor gallery-dl supports Threads; the browser extension handles it from the DOM.
   threads: { hosts: ['threads.com', 'threads.net'], engines: [] },
 };

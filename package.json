@@ -4,7 +4,7 @@
   "type": "module",
   "workspaces": ["packages/*"],
   "scripts": {
-    "test": "node --test \"packages/*/test/*.test.js\"",
+    "test": "node --test \"packages/*/test/*.test.js\" tools/changelog.test.js",
     "smc": "node packages/core/src/cli.js",
     "mcp": "node packages/mcp-server/src/index.js",
     "install-host": "node packages/native-host/install.js"

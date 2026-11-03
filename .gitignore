@@ -1,4 +1,5 @@
 .claude/worktrees/
-node_modules/
+node_modules
 downloads/
 *.log
+packages/native-host/host.sh

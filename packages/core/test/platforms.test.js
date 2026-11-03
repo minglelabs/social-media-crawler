@@ -13,6 +13,7 @@ test('detects all supported platforms', () => {
     'https://twitter.com/u/status/1': 'twitter',
     'https://www.pinterest.com/pin/1/': 'pinterest',
     'https://www.threads.com/@u/post/abc': 'threads',
+    'https://www.linkedin.com/feed/update/urn:li:activity:1/': 'linkedin',
   };
   for (const [url, platform] of Object.entries(cases)) assert.equal(detectPlatform(url), platform, url);
 });

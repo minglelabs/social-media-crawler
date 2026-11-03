@@ -31,7 +31,7 @@ const cookies = z.string().optional().describe('Browser to read login cookies fr
 
 server.tool(
   'detect_platform',
-  'Identify which supported platform a URL belongs to (instagram, youtube, tiktok, facebook, twitter, pinterest, threads).',
+  'Identify which supported platform a URL belongs to (instagram, youtube, tiktok, facebook, twitter, pinterest, linkedin, threads).',
   { url: z.string().url() },
   guard(async ({ url }) => ({ url, platform: detectPlatform(url) })),
 );
