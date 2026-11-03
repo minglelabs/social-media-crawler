@@ -2,6 +2,8 @@
 
 ## 2026-11-03
 
+- fix(linkedin): feed videos that only the page can stream are recorded and saved as .webm
+- fix(tiktok): grid/explore thumbnails now download the video instead of the cover image
 - fix(instagram): reels and stories now download; the helper receives this browser's login cookies
 - chore(release): v0.1.1 — Threads, LinkedIn, YouTube Shorts, Facebook Reels, X, Pinterest, TikTok verified end to end in Brave
 - fix(threads): download button now appears on feed images (Threads made images unclickable under an overlay layer)
