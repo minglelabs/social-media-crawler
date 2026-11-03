@@ -1,0 +1,12 @@
+{
+  "name": "@minglelabs/smc-mcp-server",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": { "smc-mcp": "src/index.js" },
+  "dependencies": {
+    "@minglelabs/smc-core": "*",
+    "@minglelabs/smc-review-monitor": "*",
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.23.0"
+  }
+}
