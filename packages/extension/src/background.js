@@ -35,7 +35,20 @@ function directUrl({ kind, mediaUrl }) {
   return /\.mp4(\?|$)/i.test(mediaUrl) ? mediaUrl : null; // HLS/DASH segments need the helper
 }
 
-async function handle(msg) {
+const REPO = 'https://github.com/minglelabs/social-media-crawler';
+
+// Shown once, after the first successful download. Store installs get a review link; GitHub/unpacked installs
+// get the repo link only. The user can dismiss it and it never comes back.
+async function maybeNudge() {
+  const { downloads = 0, nudged = false } = await chrome.storage.local.get(['downloads', 'nudged']);
+  await chrome.storage.local.set({ downloads: downloads + 1 });
+  if (nudged) return null;
+  await chrome.storage.local.set({ nudged: true });
+  const fromStore = Boolean(chrome.runtime.getManifest().update_url);
+  return { github: REPO, review: fromStore ? `https://chromewebstore.google.com/detail/${chrome.runtime.id}/reviews` : null };
+}
+
+async function download(msg) {
   const platform = platformOf(msg.pageUrl);
   const direct = directUrl(msg);
   if (direct) {
@@ -47,8 +60,12 @@ async function handle(msg) {
     return { ok: true, via: 'browser' };
   }
   // Streams/blob media: hand the post URL to the local yt-dlp/gallery-dl helper.
-  const res = await chrome.runtime.sendNativeMessage(NATIVE_HOST, { type: 'download', url: msg.permalink ?? msg.pageUrl });
-  return res;
+  return chrome.runtime.sendNativeMessage(NATIVE_HOST, { type: 'download', url: msg.permalink ?? msg.pageUrl });
+}
+
+async function handle(msg) {
+  const res = await download(msg);
+  return res?.ok ? { ...res, nudge: await maybeNudge() } : res;
 }
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {

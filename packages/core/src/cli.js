@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { parseArgs } from 'node:util';
-import { detectPlatform, listMedia, downloadMedia, doctor } from './index.js';
+import { detectPlatform, listMedia, downloadMedia, doctor, consumeNudge } from './index.js';
 
 const { values, positionals } = parseArgs({
   allowPositionals: true,
@@ -20,8 +20,12 @@ async function main() {
       return urls.map((u) => ({ url: u, platform: detectPlatform(u) }));
     case 'list':
       return Promise.all(urls.map((u) => listMedia(u, opts)));
-    case 'download':
-      return Promise.all(urls.map((u) => downloadMedia(u, opts)));
+    case 'download': {
+      const results = await Promise.all(urls.map((u) => downloadMedia(u, opts)));
+      const notice = consumeNudge();
+      if (notice) console.error(`\n★ ${notice}`);
+      return results;
+    }
     case 'doctor':
       return doctor();
     default:

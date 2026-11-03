@@ -53,6 +53,15 @@ CWS_EXTENSION_ID=<id> node packages/review-monitor/src/cli.js --dry-run
 `SLACK_WEBHOOK_URL` secret is set). Set the repo variable `CWS_EXTENSION_ID` after publishing.
 The store has no reviews API, so this parses the reviews page; it only sees the newest page and may break if Google changes the page.
 
+## One-time rate / star prompt
+
+After the first successful download the project asks once, and only once, for support:
+
+- **Extension**: a dismissible card with a "Rate on Chrome Web Store" link (store installs only) and a "Star on GitHub" link.
+- **CLI / MCP server**: a one-line GitHub star note, stored in `~/.config/smc/state.json`. In MCP it is returned as a
+  "note for the user" so the agent relays it to the human; it never asks the agent to rate or star on anyone's behalf.
+- Disable with `SMC_NO_NUDGE=1`.
+
 ## Caveats
 
 - The extension has not been loaded in a browser end-to-end yet; core, MCP server and review monitor are covered by tests / smoke runs.
