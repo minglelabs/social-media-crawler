@@ -1,0 +1,36 @@
+name: Web Store review monitor
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # daily, 09:00 KST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check Chrome Web Store reviews
+        # Set the repo variable CWS_EXTENSION_ID once the extension is published.
+        if: ${{ vars.CWS_EXTENSION_ID != '' }}
+        env:
+          CWS_EXTENSION_ID: ${{ vars.CWS_EXTENSION_ID }}
+          GH_TOKEN: ${{ github.token }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          ARGS="--issue"
+          [ -n "$SLACK_WEBHOOK_URL" ] && ARGS="$ARGS --slack"
+          node packages/review-monitor/src/cli.js $ARGS
+      - name: Persist seen-review state
+        run: |
+          git config user.name "smc-review-monitor"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/seen-reviews.json 2>/dev/null || true
+          git diff --cached --quiet || (git commit -m "chore: update seen reviews" && git push)
