@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-04
+
+- fix(facebook): no download overlay inside Messenger chat windows
+
 ## 2026-11-03
 
 - fix(linkedin): feed videos that only the page can stream are recorded and saved as .webm

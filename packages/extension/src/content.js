@@ -34,8 +34,20 @@ function mediaSource(el) {
   return el instanceof HTMLImageElement ? el.currentSrc || el.src : el.currentSrc || el.src || '';
 }
 
+// Facebook chat: the small fixed-position chat windows and the full /messages page. Chat photos are not
+// something to download from one-click overlays, and the button covers the conversation.
+function inMessenger(el) {
+  if (!location.hostname.endsWith('facebook.com')) return false;
+  if (location.pathname.startsWith('/messages')) return true;
+  for (let n = el.parentElement; n && n !== document.body; n = n.parentElement) {
+    if (n.offsetWidth > 0 && n.offsetWidth <= 420 && getComputedStyle(n).position === 'fixed') return true;
+  }
+  return false;
+}
+
 function isMedia(el) {
   if (!(el instanceof HTMLImageElement || el instanceof HTMLVideoElement)) return false;
+  if (inMessenger(el)) return false;
   const r = el.getBoundingClientRect();
   if (r.width < MIN_SIZE || r.height < MIN_SIZE) return false;
   if (el instanceof HTMLImageElement && SKIP_ALT.test(el.alt || '')) return false;
