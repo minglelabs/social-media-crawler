@@ -55,16 +55,35 @@ async function maybeNudge() {
   return { github: REPO, review: fromStore ? `https://chromewebstore.google.com/detail/${chrome.runtime.id}/reviews` : null };
 }
 
+// chrome.downloads.download() resolves as soon as the download starts, so wait for it to finish (or fail)
+// before telling the user it was saved.
+async function saveDirect(url, filename) {
+  const id = await chrome.downloads.download({ url, filename, conflictAction: 'uniquify' });
+  return new Promise((resolve) => {
+    const done = (res) => {
+      chrome.downloads.onChanged.removeListener(listener);
+      resolve(res);
+    };
+    const listener = (d) => {
+      if (d.id !== id || !d.state) return;
+      if (d.state.current === 'complete') done({ ok: true, via: 'browser' });
+      else if (d.state.current === 'interrupted') done({ ok: false, error: d.error?.current ?? 'interrupted' });
+    };
+    chrome.downloads.onChanged.addListener(listener);
+    chrome.downloads.search({ id }).then(([d]) => {
+      if (d?.state === 'complete') done({ ok: true, via: 'browser' });
+      else if (d?.state === 'interrupted') done({ ok: false, error: d.error ?? 'interrupted' });
+    });
+  });
+}
+
 async function download(msg) {
   const platform = platformOf(msg.pageUrl);
   const direct = directUrl(msg);
   if (direct) {
-    await chrome.downloads.download({
-      url: direct,
-      filename: filenameFor(direct, platform, msg.kind),
-      conflictAction: 'uniquify',
-    });
-    return { ok: true, via: 'browser' };
+    const res = await saveDirect(direct, filenameFor(direct, platform, msg.kind));
+    if (res.ok) return res;
+    // The browser refused or the CDN rejected the request; the helper can still fetch the post itself.
   }
   // Streams/blob media: hand the post URL to the local yt-dlp/gallery-dl helper, together with this browser's
   // login cookies for the site (Instagram reels/stories, private posts) so the helper sees what the user sees.

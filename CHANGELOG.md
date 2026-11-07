@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-07
+
+- fix(x): "Saved" is shown only after the file is actually on disk; failed direct downloads fall back to the helper
+
 ## 2026-11-04
 
 - fix(facebook): no download overlay inside Messenger chat windows
