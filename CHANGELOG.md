@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-10
+
+- fix: downloads from the helper now land directly in <platform>/ (no per-user subfolders, lowercase platform names)
+
 ## 2026-11-07
 
 - fix(x): "Saved" is shown only after the file is actually on disk; failed direct downloads fall back to the helper
