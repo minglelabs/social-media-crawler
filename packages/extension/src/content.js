@@ -104,10 +104,13 @@ document.addEventListener('mousemove', (e) => {
 window.addEventListener('scroll', () => { button.style.display = 'none'; target = null; }, { passive: true });
 button.addEventListener('mouseenter', () => clearTimeout(hideTimer));
 
-function notify(text) {
+let toastTimer = null;
+// Progress messages stay up until the result replaces them; results fade after a few seconds.
+function notify(text, { sticky = false } = {}) {
+  clearTimeout(toastTimer);
   toast.textContent = text;
   toast.style.display = 'block';
-  setTimeout(() => (toast.style.display = 'none'), 3500);
+  if (!sticky) toastTimer = setTimeout(() => (toast.style.display = 'none'), 3500);
 }
 
 // One-time, dismissible ask after the first successful download.
@@ -156,7 +159,7 @@ button.addEventListener('click', async (e) => {
   if (!target) return;
   const el = target;
   const permalink = el.closest('article, [data-pressable-container], [role="article"]')?.querySelector(PERMALINK)?.href;
-  notify('Downloading…');
+  notify('Downloading… long videos can take a few minutes', { sticky: true });
   // A cover image on a video link (TikTok/YouTube/Reels grids) stands for the video, not for the picture itself.
   const isVideo = el instanceof HTMLVideoElement || VIDEO_LINK.test(permalink ?? '');
   try {
@@ -169,7 +172,7 @@ button.addEventListener('click', async (e) => {
     });
     if (!res?.ok && el instanceof HTMLVideoElement && el.src.startsWith('blob:')) {
       // The helper cannot resolve some in-page streams (LinkedIn); record what the player is showing instead.
-      notify('Recording…');
+      notify('Recording…', { sticky: true });
       await recordVideo(el);
       notify('Saved ✓');
       return;

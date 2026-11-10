@@ -77,6 +77,20 @@ async function saveDirect(url, filename) {
   });
 }
 
+// A long-lived port (unlike sendNativeMessage) keeps the service worker alive while a long video downloads.
+function askHelper(msg) {
+  return new Promise((resolve) => {
+    const port = chrome.runtime.connectNative(NATIVE_HOST);
+    port.onMessage.addListener((res) => {
+      resolve(res);
+      port.disconnect();
+    });
+    port.onDisconnect.addListener(() =>
+      resolve({ ok: false, error: chrome.runtime.lastError?.message ?? 'helper disconnected' }));
+    port.postMessage(msg);
+  });
+}
+
 async function download(msg) {
   const platform = platformOf(msg.pageUrl);
   const direct = directUrl(msg);
@@ -89,7 +103,7 @@ async function download(msg) {
   // login cookies for the site (Instagram reels/stories, private posts) so the helper sees what the user sees.
   const url = msg.permalink ?? msg.pageUrl;
   const cookies = toNetscape(await chrome.cookies.getAll({ domain: registrableDomain(url) }));
-  const res = await chrome.runtime.sendNativeMessage(NATIVE_HOST, { type: 'download', url, cookies, handoff: true });
+  const res = await askHelper({ type: 'download', url, cookies, handoff: true });
   if (!res?.ok || !res.serve) return res;
   // The helper serves what it fetched on localhost; saving it through the browser puts it in the download list.
   for (const f of res.serve) {
