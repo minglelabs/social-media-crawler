@@ -67,13 +67,23 @@ async function handle(msg) {
 }
 
 let buf = Buffer.alloc(0);
+let inFlight = 0;
+let ended = false;
 process.stdin.on('data', async (chunk) => {
   buf = Buffer.concat([buf, chunk]);
   while (buf.length >= 4 && buf.length >= 4 + buf.readUInt32LE(0)) {
     const len = buf.readUInt32LE(0);
     const msg = JSON.parse(buf.subarray(4, 4 + len).toString());
     buf = buf.subarray(4 + len);
-    send(await handle(msg));
+    inFlight++;
+    const res = await handle(msg);
+    inFlight--;
+    if (!ended) send(res);
+    else if (!inFlight) process.exit(0);
   }
 });
-process.stdin.on('end', () => process.exit(0));
+// Let a running download finish its cleanup (temp cookie file) before exiting.
+process.stdin.on('end', () => {
+  ended = true;
+  if (!inFlight) process.exit(0);
+});

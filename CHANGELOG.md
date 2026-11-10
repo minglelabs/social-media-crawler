@@ -2,6 +2,7 @@
 
 ## 2026-11-10
 
+- fix(youtube): long videos download ~4x faster (https streams over HLS), progress stays visible, and the download no longer dies when the browser idles
 - feat: videos saved through the helper now appear in the browser's download list (and can be opened from there)
 - fix: downloads from the helper now land directly in <platform>/ (no per-user subfolders, lowercase platform names)
 

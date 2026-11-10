@@ -69,6 +69,8 @@ async function downloadWith(engine, url, opts) {
     const r = await run('yt-dlp', [
       '-o', path.join(outDir, '%(uploader)s_%(id)s.%(ext)s'),
       '--no-warnings', '--print', 'after_move:filepath',
+      // Same resolution, but prefer plain https over HLS: on YouTube that is ~4x faster and half the size.
+      '-S', 'res,proto', '-N', '4',
       ...cookieArgs(opts), url,
     ]);
     if (r.code !== 0) throw new Error(r.stderr.trim().split('\n').pop() || 'yt-dlp failed');

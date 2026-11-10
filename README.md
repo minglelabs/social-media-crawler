@@ -9,6 +9,7 @@ plus a tool-calling harness (MCP server + CLI) so agents can do the same without
 Platforms change their UI all the time; we track those changes and ship fixes continuously. Full history: [CHANGELOG.md](CHANGELOG.md) · [Releases](https://github.com/minglelabs/social-media-crawler/releases)
 
 <!-- LATEST-UPDATES:START -->
+- **2026-11-10** — fix(youtube): long videos download ~4x faster (https streams over HLS), progress stays visible, and the download no longer dies when the browser idles
 - **2026-11-10** — feat: videos saved through the helper now appear in the browser's download list (and can be opened from there)
 - **2026-11-10** — fix: downloads from the helper now land directly in <platform>/ (no per-user subfolders, lowercase platform names)
 - **2026-11-07** — fix(x): "Saved" is shown only after the file is actually on disk; failed direct downloads fall back to the helper
@@ -16,7 +17,6 @@ Platforms change their UI all the time; we track those changes and ship fixes co
 - **2026-11-03** — fix(linkedin): feed videos that only the page can stream are recorded and saved as .webm
 - **2026-11-03** — fix(tiktok): grid/explore thumbnails now download the video instead of the cover image
 - **2026-11-03** — fix(instagram): reels and stories now download; the helper receives this browser's login cookies
-- **2026-11-03** — chore(release): v0.1.1 — Threads, LinkedIn, YouTube Shorts, Facebook Reels, X, Pinterest, TikTok verified end to end in Brave
 <!-- LATEST-UPDATES:END -->
 
 ## Packages
