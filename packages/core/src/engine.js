@@ -63,17 +63,18 @@ async function listWith(engine, url, opts) {
 }
 
 async function downloadWith(engine, url, opts) {
-  const outDir = opts.outDir ?? DEFAULT_OUT;
+  // One folder per platform, files directly inside (same layout as the extension): <out>/<platform>/<file>
+  const outDir = path.join(opts.outDir ?? DEFAULT_OUT, enginesFor(url).platform);
   if (engine === 'yt-dlp') {
     const r = await run('yt-dlp', [
-      '-o', path.join(outDir, '%(extractor)s', '%(uploader)s_%(id)s.%(ext)s'),
+      '-o', path.join(outDir, '%(uploader)s_%(id)s.%(ext)s'),
       '--no-warnings', '--print', 'after_move:filepath',
       ...cookieArgs(opts), url,
     ]);
     if (r.code !== 0) throw new Error(r.stderr.trim().split('\n').pop() || 'yt-dlp failed');
     return r.stdout.split('\n').map((l) => l.trim()).filter(Boolean);
   }
-  const r = await run('gallery-dl', ['-d', outDir, ...cookieArgs(opts), url]);
+  const r = await run('gallery-dl', ['-D', outDir, ...cookieArgs(opts), url]);
   if (r.code !== 0) throw new Error(r.stderr.trim().split('\n').pop() || 'gallery-dl failed');
   // Skipped (already downloaded) files are prefixed with "# ".
   return r.stdout.split('\n').map((l) => l.replace(/^# /, '').trim()).filter(Boolean);
