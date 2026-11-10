@@ -2,6 +2,7 @@
 
 ## 2026-11-10
 
+- feat: videos saved through the helper now appear in the browser's download list (and can be opened from there)
 - fix: downloads from the helper now land directly in <platform>/ (no per-user subfolders, lowercase platform names)
 
 ## 2026-11-07

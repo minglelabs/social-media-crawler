@@ -3,6 +3,9 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import crypto from 'node:crypto';
+import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { downloadMedia } from '@minglelabs/smc-core';
 
 function send(obj) {
@@ -10,6 +13,37 @@ function send(obj) {
   const head = Buffer.alloc(4);
   head.writeUInt32LE(body.length);
   process.stdout.write(Buffer.concat([head, body]));
+}
+
+// Download into a scratch dir and serve it on 127.0.0.1 so the browser saves (and lists) the files itself.
+async function handoff(url, opts) {
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'smc-out-'));
+  const result = await downloadMedia(url, { ...opts, outDir: out });
+  const files = result.files.filter((f) => fs.existsSync(f));
+  const flat = fs.mkdtempSync(path.join(os.tmpdir(), 'smc-serve-'));
+  const names = files.map((f, i) => {
+    const name = `${i}_${path.basename(f)}`;
+    fs.renameSync(f, path.join(flat, name));
+    return name;
+  });
+  fs.rmSync(out, { recursive: true, force: true });
+  if (!names.length) throw new Error('no files were produced');
+  const token = crypto.randomBytes(16).toString('hex');
+  const child = spawn(process.execPath, [fileURLToPath(new URL('./serve.js', import.meta.url)), flat, token], {
+    detached: true,
+    stdio: ['ignore', 'pipe', 'ignore'],
+  });
+  const port = await new Promise((resolve, reject) => {
+    child.stdout.once('data', (d) => resolve(Number(String(d).trim())));
+    child.once('error', reject);
+  });
+  child.unref();
+  child.stdout.destroy();
+  return {
+    ok: true,
+    via: result.engine,
+    serve: names.map((n) => ({ url: `http://127.0.0.1:${port}/${token}/${encodeURIComponent(n)}`, name: n.replace(/^\d+_/, '') })),
+  };
 }
 
 async function handle(msg) {
@@ -22,6 +56,7 @@ async function handle(msg) {
       opts.cookiesFile = path.join(dir, 'cookies.txt');
       fs.writeFileSync(opts.cookiesFile, msg.cookies, { mode: 0o600 });
     }
+    if (msg.handoff) return await handoff(msg.url, opts);
     const result = await downloadMedia(msg.url, opts);
     return { ok: true, via: result.engine, files: result.files };
   } catch (err) {

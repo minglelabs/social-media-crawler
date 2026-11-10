@@ -89,7 +89,14 @@ async function download(msg) {
   // login cookies for the site (Instagram reels/stories, private posts) so the helper sees what the user sees.
   const url = msg.permalink ?? msg.pageUrl;
   const cookies = toNetscape(await chrome.cookies.getAll({ domain: registrableDomain(url) }));
-  return chrome.runtime.sendNativeMessage(NATIVE_HOST, { type: 'download', url, cookies });
+  const res = await chrome.runtime.sendNativeMessage(NATIVE_HOST, { type: 'download', url, cookies, handoff: true });
+  if (!res?.ok || !res.serve) return res;
+  // The helper serves what it fetched on localhost; saving it through the browser puts it in the download list.
+  for (const f of res.serve) {
+    const saved = await saveDirect(f.url, `${ROOT}/${platform}/${f.name}`);
+    if (!saved.ok) return saved;
+  }
+  return { ok: true, via: res.via };
 }
 
 async function handle(msg) {
