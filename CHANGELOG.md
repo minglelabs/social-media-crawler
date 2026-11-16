@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-16
+
+- fix: the download button only appears on media you can actually see under the pointer (not on carousel slides scrolled out of view or images behind a viewer/modal; Threads, Instagram, Facebook)
+
 ## 2026-11-10
 
 - fix(youtube): long videos download ~4x faster (https streams over HLS), progress stays visible, and the download no longer dies when the browser idles

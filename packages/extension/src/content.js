@@ -54,24 +54,57 @@ function isMedia(el) {
   return Boolean(mediaSource(el)) || el instanceof HTMLVideoElement;
 }
 
-// Sites put transparent layers above media, and some (Threads) make the <img> itself unhittable, so
-// elementsFromPoint can miss it. Fall back to comparing the pointer with every media element's rectangle.
-function mediaAt(x, y) {
-  const hit = document.elementsFromPoint(x, y).find(isMedia);
-  if (hit) return hit;
-  let best = null;
-  let bestArea = Infinity;
-  for (const el of document.querySelectorAll('img, video')) {
-    if (!isMedia(el)) continue;
-    const r = el.getBoundingClientRect();
-    if (x < r.left || x > r.right || y < r.top || y > r.bottom) continue;
-    const area = r.width * r.height;
-    if (area < bestArea) {
-      best = el;
-      bestArea = area;
+// The point must not be clipped away by a scrolling/carousel container (off-screen carousel slides).
+// Only containing blocks clip: a fixed box escapes every ancestor, an absolute one skips static ancestors.
+function visibleAt(el, x, y) {
+  if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) return false;
+  let pos = getComputedStyle(el).position;
+  for (let n = el.parentElement; n && n !== document.documentElement && pos !== 'fixed'; n = n.parentElement) {
+    const cs = getComputedStyle(n);
+    if (pos === 'absolute' && cs.position === 'static') continue;
+    if (cs.overflow !== 'visible') {
+      const r = n.getBoundingClientRect();
+      if (x < r.left || x > r.right || y < r.top || y > r.bottom) return false;
     }
+    pos = cs.position;
   }
-  return best;
+  return true;
+}
+
+// Sites lay transparent click/gesture layers over media, so the topmost element is rarely the <img> itself.
+// Accept the media only if that top layer belongs to it (their common ancestor is about the media's size);
+// otherwise something else (a modal, a sidebar, another post) is in front and the media is not what the
+// user is pointing at.
+function inFront(top, el) {
+  if (top === el || el.contains(top)) return true;
+  let lca = el.parentElement;
+  while (lca && !lca.contains(top)) lca = lca.parentElement;
+  if (!lca) return false;
+  const a = lca.getBoundingClientRect();
+  const b = el.getBoundingClientRect();
+  return a.width * a.height <= 1.6 * b.width * b.height;
+}
+
+// Some sites (Threads) make the <img> itself unhittable, so elementsFromPoint can miss it; also compare the
+// pointer with every media element's rectangle, then keep only media the user can actually see there.
+function mediaAt(x, y) {
+  const stack = document.elementsFromPoint(x, y);
+  const top = stack[0];
+  if (!top) return null;
+  if (top === host) return target; // pointer is on our own button
+  const candidates = stack.filter(isMedia);
+  const rest = [];
+  for (const el of document.querySelectorAll('img, video')) {
+    if (candidates.includes(el) || !isMedia(el)) continue;
+    const r = el.getBoundingClientRect();
+    if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) rest.push(el);
+  }
+  rest.sort((a, b) => {
+    const ra = a.getBoundingClientRect();
+    const rb = b.getBoundingClientRect();
+    return ra.width * ra.height - rb.width * rb.height;
+  });
+  return [...candidates, ...rest].find((el) => visibleAt(el, x, y) && inFront(top, el)) ?? null;
 }
 
 function show(el) {
