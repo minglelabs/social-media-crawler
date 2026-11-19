@@ -66,13 +66,16 @@ async function downloadWith(engine, url, opts) {
   // One folder per platform, files directly inside (same layout as the extension): <out>/<platform>/<file>
   const outDir = path.join(opts.outDir ?? DEFAULT_OUT, enginesFor(url).platform);
   if (engine === 'yt-dlp') {
-    const r = await run('yt-dlp', [
+    const args = [
       '-o', path.join(outDir, '%(uploader)s_%(id)s.%(ext)s'),
       '--no-warnings', '--print', 'after_move:filepath',
       // Same resolution, but prefer plain https over HLS: on YouTube that is ~4x faster and half the size.
       '-S', 'res,proto', '-N', '4',
       ...cookieArgs(opts), url,
-    ]);
+    ];
+    let r = await run('yt-dlp', args);
+    // YouTube now and then hands out stream URLs that answer 403; a fresh extraction gets working ones.
+    for (let i = 0; i < 2 && r.code !== 0 && /HTTP Error 403/.test(r.stderr); i++) r = await run('yt-dlp', args);
     if (r.code !== 0) throw new Error(r.stderr.trim().split('\n').pop() || 'yt-dlp failed');
     return r.stdout.split('\n').map((l) => l.trim()).filter(Boolean);
   }
