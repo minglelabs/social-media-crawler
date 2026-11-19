@@ -9,6 +9,7 @@ plus a tool-calling harness (MCP server + CLI) so agents can do the same without
 Platforms change their UI all the time; we track those changes and ship fixes continuously. Full history: [CHANGELOG.md](CHANGELOG.md) · [Releases](https://github.com/minglelabs/social-media-crawler/releases)
 
 <!-- LATEST-UPDATES:START -->
+- **2026-11-19** — fix(youtube): save up to 1080p H.264 mp4 for fast, playable downloads; screen recording fallback only on LinkedIn
 - **2026-11-19** — fix(youtube): download just the clicked video when the URL comes from a mix or playlist
 - **2026-11-19** — fix(youtube): retry automatically when YouTube rejects a download with 403
 - **2026-11-16** — fix: the download button only appears on media you can actually see under the pointer (not on carousel slides scrolled out of view or images behind a viewer/modal; Threads, Instagram, Facebook)
@@ -16,7 +17,6 @@ Platforms change their UI all the time; we track those changes and ship fixes co
 - **2026-11-10** — feat: videos saved through the helper now appear in the browser's download list (and can be opened from there)
 - **2026-11-10** — fix: downloads from the helper now land directly in <platform>/ (no per-user subfolders, lowercase platform names)
 - **2026-11-07** — fix(x): "Saved" is shown only after the file is actually on disk; failed direct downloads fall back to the helper
-- **2026-11-04** — fix(facebook): no download overlay inside Messenger chat windows
 <!-- LATEST-UPDATES:END -->
 
 ## Packages

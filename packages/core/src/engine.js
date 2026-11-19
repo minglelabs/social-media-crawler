@@ -71,8 +71,9 @@ async function downloadWith(engine, url, opts) {
       '--no-warnings', '--print', 'after_move:filepath',
       // A watch URL opened from a mix/playlist carries list=...; the user clicked one video, not the whole list.
       '--no-playlist',
-      // Same resolution, but prefer plain https over HLS: on YouTube that is ~4x faster and half the size.
-      '-S', 'res,proto', '-N', '4',
+      // Up to 1080p (4K is ~5x the size and minutes longer); at a given resolution prefer plain https over HLS
+      // (~4x faster on YouTube), then H.264/AAC merged into .mp4 so it plays everywhere (QuickTime included).
+      '-S', 'res:1080,proto,vcodec:h264,acodec:m4a', '--merge-output-format', 'mp4', '-N', '4',
       ...cookieArgs(opts), url,
     ];
     let r = await run('yt-dlp', args);
