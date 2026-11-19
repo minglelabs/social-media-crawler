@@ -66,7 +66,7 @@ async function downloadWith(engine, url, opts) {
   // One folder per platform, files directly inside (same layout as the extension): <out>/<platform>/<file>
   const outDir = path.join(opts.outDir ?? DEFAULT_OUT, enginesFor(url).platform);
   if (engine === 'yt-dlp') {
-    const args = [
+    const base = [
       '-o', path.join(outDir, '%(uploader)s_%(id)s.%(ext)s'),
       '--no-warnings', '--print', 'after_move:filepath',
       // A watch URL opened from a mix/playlist carries list=...; the user clicked one video, not the whole list.
@@ -74,11 +74,19 @@ async function downloadWith(engine, url, opts) {
       // Up to 1080p (4K is ~5x the size and minutes longer); at a given resolution prefer plain https over HLS
       // (~4x faster on YouTube), then H.264/AAC merged into .mp4 so it plays everywhere (QuickTime included).
       '-S', 'res:1080,proto,vcodec:h264,acodec:m4a', '--merge-output-format', 'mp4', '-N', '4',
-      ...cookieArgs(opts), url,
     ];
-    let r = await run('yt-dlp', args);
-    // YouTube now and then hands out stream URLs that answer 403; a fresh extraction gets working ones.
-    for (let i = 0; i < 2 && r.code !== 0 && /HTTP Error 403/.test(r.stderr); i++) r = await run('yt-dlp', args);
+    // Logged-in YouTube sessions get stream URLs that are cut off with 403 partway through (missing PO token),
+    // while anonymous ones download fine; so on YouTube try without cookies first, with them only as a fallback
+    // (age-restricted / members-only videos).
+    const attempts = [[...base, ...cookieArgs(opts), url]];
+    if (enginesFor(url).platform === 'youtube' && cookieArgs(opts).length) attempts.unshift([...base, url]);
+    let r;
+    for (const args of attempts) {
+      r = await run('yt-dlp', args);
+      // YouTube now and then hands out stream URLs that answer 403; a fresh extraction gets working ones.
+      for (let i = 0; i < 2 && r.code !== 0 && /HTTP Error 403/.test(r.stderr); i++) r = await run('yt-dlp', args);
+      if (r.code === 0) break;
+    }
     if (r.code !== 0) throw new Error(r.stderr.trim().split('\n').pop() || 'yt-dlp failed');
     return r.stdout.split('\n').map((l) => l.trim()).filter(Boolean);
   }

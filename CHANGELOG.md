@@ -2,6 +2,7 @@
 
 ## 2026-11-19
 
+- fix(youtube): downloads no longer stall at 403 when you are signed in to YouTube
 - fix(youtube): save up to 1080p H.264 mp4 for fast, playable downloads; screen recording fallback only on LinkedIn
 - fix(youtube): download just the clicked video when the URL comes from a mix or playlist
 - fix(youtube): retry automatically when YouTube rejects a download with 403
