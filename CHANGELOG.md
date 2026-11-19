@@ -2,6 +2,7 @@
 
 ## 2026-11-19
 
+- fix(youtube): download just the clicked video when the URL comes from a mix or playlist
 - fix(youtube): retry automatically when YouTube rejects a download with 403
 
 ## 2026-11-16

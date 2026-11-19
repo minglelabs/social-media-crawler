@@ -38,7 +38,7 @@ function enginesFor(url) {
 
 async function listWith(engine, url, opts) {
   if (engine === 'yt-dlp') {
-    const r = await run('yt-dlp', ['-J', '--no-warnings', ...cookieArgs(opts), url]);
+    const r = await run('yt-dlp', ['-J', '--no-warnings', '--no-playlist', ...cookieArgs(opts), url]);
     if (r.code !== 0) throw new Error(r.stderr.trim().split('\n').pop() || 'yt-dlp failed');
     const info = JSON.parse(r.stdout);
     const entries = info.entries ?? [info];
@@ -69,6 +69,8 @@ async function downloadWith(engine, url, opts) {
     const args = [
       '-o', path.join(outDir, '%(uploader)s_%(id)s.%(ext)s'),
       '--no-warnings', '--print', 'after_move:filepath',
+      // A watch URL opened from a mix/playlist carries list=...; the user clicked one video, not the whole list.
+      '--no-playlist',
       // Same resolution, but prefer plain https over HLS: on YouTube that is ~4x faster and half the size.
       '-S', 'res,proto', '-N', '4',
       ...cookieArgs(opts), url,
