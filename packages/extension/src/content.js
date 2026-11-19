@@ -203,7 +203,7 @@ button.addEventListener('click', async (e) => {
       pageUrl: location.href,
       permalink: permalink ?? null,
     });
-    if (!res?.ok && el instanceof HTMLVideoElement && el.src.startsWith('blob:')) {
+    if (!res?.ok && location.hostname.endsWith('linkedin.com') && el instanceof HTMLVideoElement && el.src.startsWith('blob:')) {
       // The helper cannot resolve some in-page streams (LinkedIn); record what the player is showing instead.
       notify('Recording…', { sticky: true });
       await recordVideo(el);
