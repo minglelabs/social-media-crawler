@@ -54,21 +54,28 @@ function isMedia(el) {
   return Boolean(mediaSource(el)) || el instanceof HTMLVideoElement;
 }
 
-// The point must not be clipped away by a scrolling/carousel container (off-screen carousel slides).
+// The part of the media left after the viewport and every clipping (scrolling/carousel) container cut it.
 // Only containing blocks clip: a fixed box escapes every ancestor, an absolute one skips static ancestors.
-function visibleAt(el, x, y) {
-  if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) return false;
+function visibleRect(el) {
+  const r = el.getBoundingClientRect();
+  const v = { left: Math.max(r.left, 0), top: Math.max(r.top, 0), right: Math.min(r.right, innerWidth), bottom: Math.min(r.bottom, innerHeight) };
   let pos = getComputedStyle(el).position;
   for (let n = el.parentElement; n && n !== document.documentElement && pos !== 'fixed'; n = n.parentElement) {
     const cs = getComputedStyle(n);
     if (pos === 'absolute' && cs.position === 'static') continue;
     if (cs.overflow !== 'visible') {
-      const r = n.getBoundingClientRect();
-      if (x < r.left || x > r.right || y < r.top || y > r.bottom) return false;
+      const c = n.getBoundingClientRect();
+      v.left = Math.max(v.left, c.left); v.top = Math.max(v.top, c.top);
+      v.right = Math.min(v.right, c.right); v.bottom = Math.min(v.bottom, c.bottom);
     }
     pos = cs.position;
   }
-  return true;
+  return v.right > v.left && v.bottom > v.top ? v : null;
+}
+
+function visibleAt(el, x, y) {
+  const v = visibleRect(el);
+  return Boolean(v) && x >= v.left && x <= v.right && y >= v.top && y <= v.bottom;
 }
 
 // Sites lay transparent click/gesture layers over media, so the topmost element is rarely the <img> itself.
@@ -107,13 +114,44 @@ function mediaAt(x, y) {
   return [...candidates, ...rest].find((el) => visibleAt(el, x, y) && inFront(top, el)) ?? null;
 }
 
-function show(el) {
-  target = el;
+// Nothing but the media itself (or its own transparent layers) is drawn at this point.
+function frontAt(el, x, y) {
+  const top = document.elementsFromPoint(x, y).find((n) => n !== host);
+  return Boolean(top) && inFront(top, el);
+}
+
+// The button must sit where the media is actually visible, not just where the pointer is: try the corners of
+// the visible part of the media, then next to the pointer, and take the first spot the whole button fits
+// unclipped and uncovered (sticky headers, carousel edges, viewer chrome).
+const BTN = 36;
+const PAD = 8;
+function spotFor(el, x, y) {
+  const v = visibleRect(el);
+  if (!v) return null;
+  const clampX = (l) => Math.min(Math.max(l, v.left + PAD), v.right - PAD - BTN);
+  const clampY = (t) => Math.min(Math.max(t, v.top + PAD), v.bottom - PAD - BTN);
+  const spots = [
+    [v.left + PAD, v.top + PAD], [v.right - PAD - BTN, v.top + PAD],
+    [v.left + PAD, v.bottom - PAD - BTN], [v.right - PAD - BTN, v.bottom - PAD - BTN],
+    [clampX(x - BTN / 2), clampY(y - BTN - 12)], [clampX(x - BTN / 2), clampY(y + 12)],
+  ];
+  const fits = ([l, t]) => {
+    if (l < v.left || t < v.top || l + BTN > v.right || t + BTN > v.bottom) return false;
+    const pts = [[l + 1, t + 1], [l + BTN - 1, t + 1], [l + 1, t + BTN - 1], [l + BTN - 1, t + BTN - 1], [l + BTN / 2, t + BTN / 2]];
+    return pts.every(([px, py]) => frontAt(el, px, py));
+  };
+  return spots.find(fits) ?? null;
+}
+
+function show(el, x, y) {
   clearTimeout(hideTimer);
-  const r = el.getBoundingClientRect();
+  if (el === target && button.style.display === 'block') return;
+  const spot = spotFor(el, x, y);
+  if (!spot) { if (target) hide(); return; }
+  target = el;
   button.style.display = 'block';
-  button.style.left = `${Math.max(8, r.left + 8)}px`;
-  button.style.top = `${Math.max(8, r.top + 8)}px`;
+  button.style.left = `${spot[0]}px`;
+  button.style.top = `${spot[1]}px`;
 }
 
 function hide() {
@@ -130,7 +168,7 @@ document.addEventListener('mousemove', (e) => {
   requestAnimationFrame(() => {
     ticking = false;
     const el = mediaAt(e.clientX, e.clientY);
-    if (el) show(el);
+    if (el) show(el, e.clientX, e.clientY);
     else if (target) hide();
   });
 }, { passive: true });
