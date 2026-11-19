@@ -2,6 +2,7 @@
 
 ## 2026-11-19
 
+- fix(extension): place the download button only where it is actually visible, never under headers, viewers or clipped edges
 - fix(youtube): downloads no longer stall at 403 when you are signed in to YouTube
 - fix(youtube): save up to 1080p H.264 mp4 for fast, playable downloads; screen recording fallback only on LinkedIn
 - fix(youtube): download just the clicked video when the URL comes from a mix or playlist
