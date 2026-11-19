@@ -9,6 +9,7 @@ plus a tool-calling harness (MCP server + CLI) so agents can do the same without
 Platforms change their UI all the time; we track those changes and ship fixes continuously. Full history: [CHANGELOG.md](CHANGELOG.md) · [Releases](https://github.com/minglelabs/social-media-crawler/releases)
 
 <!-- LATEST-UPDATES:START -->
+- **2026-11-19** — fix(youtube): downloads no longer stall at 403 when you are signed in to YouTube
 - **2026-11-19** — fix(youtube): save up to 1080p H.264 mp4 for fast, playable downloads; screen recording fallback only on LinkedIn
 - **2026-11-19** — fix(youtube): download just the clicked video when the URL comes from a mix or playlist
 - **2026-11-19** — fix(youtube): retry automatically when YouTube rejects a download with 403
@@ -16,7 +17,6 @@ Platforms change their UI all the time; we track those changes and ship fixes co
 - **2026-11-10** — fix(youtube): long videos download ~4x faster (https streams over HLS), progress stays visible, and the download no longer dies when the browser idles
 - **2026-11-10** — feat: videos saved through the helper now appear in the browser's download list (and can be opened from there)
 - **2026-11-10** — fix: downloads from the helper now land directly in <platform>/ (no per-user subfolders, lowercase platform names)
-- **2026-11-07** — fix(x): "Saved" is shown only after the file is actually on disk; failed direct downloads fall back to the helper
 <!-- LATEST-UPDATES:END -->
 
 ## Packages
