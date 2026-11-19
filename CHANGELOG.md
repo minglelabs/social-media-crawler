@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-19
+
+- fix(youtube): retry automatically when YouTube rejects a download with 403
+
 ## 2026-11-16
 
 - fix: the download button only appears on media you can actually see under the pointer (not on carousel slides scrolled out of view or images behind a viewer/modal; Threads, Instagram, Facebook)
