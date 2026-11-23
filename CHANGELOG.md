@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-23
+
+- fix(threads): videos download again; the overlay now reads the player's original mp4 instead of the blob stream
+
 ## 2026-11-19
 
 - fix(extension): place the download button only where it is actually visible, never under headers, viewers or clipped edges

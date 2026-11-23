@@ -32,6 +32,12 @@
         "src/content.js"
       ],
       "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://*.threads.com/*", "https://*.threads.net/*"],
+      "js": ["src/page-video.js"],
+      "world": "MAIN",
+      "run_at": "document_idle"
     }
   ],
   "host_permissions": [

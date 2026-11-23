@@ -34,6 +34,17 @@ function mediaSource(el) {
   return el instanceof HTMLImageElement ? el.currentSrc || el.src : el.currentSrc || el.src || '';
 }
 
+// Threads streams videos from blob: URLs and no CLI engine supports it; page-video.js (page world) reads the
+// player's progressive mp4 for us. Elsewhere, or if that fails, keep the element's own source.
+function videoSource(el) {
+  const own = mediaSource(el);
+  if (!own.startsWith('blob:') || !/(^|\.)threads\.(com|net)$/.test(location.hostname)) return own;
+  el.removeAttribute('data-smc-src');
+  el.setAttribute('data-smc-want', '');
+  document.dispatchEvent(new CustomEvent('smc-resolve-video'));
+  return el.getAttribute('data-smc-src') || own;
+}
+
 // Facebook chat: the small fixed-position chat windows and the full /messages page. Chat photos are not
 // something to download from one-click overlays, and the button covers the conversation.
 function inMessenger(el) {
@@ -237,7 +248,7 @@ button.addEventListener('click', async (e) => {
     const res = await chrome.runtime.sendMessage({
       type: 'download',
       kind: isVideo ? 'video' : 'image',
-      mediaUrl: el instanceof HTMLVideoElement || !isVideo ? mediaSource(el) : null,
+      mediaUrl: el instanceof HTMLVideoElement ? videoSource(el) : !isVideo ? mediaSource(el) : null,
       pageUrl: location.href,
       permalink: permalink ?? null,
     });
