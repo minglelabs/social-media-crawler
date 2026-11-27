@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-11-27
+
+- feat(youtube): show download progress in the toast; the helper logs failures to ~/Library/Logs/SocialMediaCrawler/helper.log
+
 ## 2026-11-23
 
 - fix(threads): videos download again; the overlay now reads the player's original mp4 instead of the blob stream

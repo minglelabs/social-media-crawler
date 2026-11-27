@@ -9,6 +9,7 @@ plus a tool-calling harness (MCP server + CLI) so agents can do the same without
 Platforms change their UI all the time; we track those changes and ship fixes continuously. Full history: [CHANGELOG.md](CHANGELOG.md) · [Releases](https://github.com/minglelabs/social-media-crawler/releases)
 
 <!-- LATEST-UPDATES:START -->
+- **2026-11-27** — feat(youtube): show download progress in the toast; the helper logs failures to ~/Library/Logs/SocialMediaCrawler/helper.log
 - **2026-11-23** — fix(threads): videos download again; the overlay now reads the player's original mp4 instead of the blob stream
 - **2026-11-19** — fix(extension): place the download button only where it is actually visible, never under headers, viewers or clipped edges
 - **2026-11-19** — fix(youtube): downloads no longer stall at 403 when you are signed in to YouTube
@@ -16,7 +17,6 @@ Platforms change their UI all the time; we track those changes and ship fixes co
 - **2026-11-19** — fix(youtube): download just the clicked video when the URL comes from a mix or playlist
 - **2026-11-19** — fix(youtube): retry automatically when YouTube rejects a download with 403
 - **2026-11-16** — fix: the download button only appears on media you can actually see under the pointer (not on carousel slides scrolled out of view or images behind a viewer/modal; Threads, Instagram, Facebook)
-- **2026-11-10** — fix(youtube): long videos download ~4x faster (https streams over HLS), progress stays visible, and the download no longer dies when the browser idles
 <!-- LATEST-UPDATES:END -->
 
 ## Packages

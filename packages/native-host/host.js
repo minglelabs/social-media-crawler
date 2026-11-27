@@ -15,10 +15,26 @@ function send(obj) {
   process.stdout.write(Buffer.concat([head, body]));
 }
 
+// Failures are otherwise invisible (the browser only shows a toast): keep a short log to diagnose them.
+const LOG = path.join(os.homedir(), 'Library', 'Logs', 'SocialMediaCrawler', 'helper.log');
+function log(line) {
+  try {
+    fs.mkdirSync(path.dirname(LOG), { recursive: true });
+    if (fs.existsSync(LOG) && fs.statSync(LOG).size > 1_000_000) fs.renameSync(LOG, `${LOG}.1`);
+    fs.appendFileSync(LOG, `${new Date().toISOString()} ${line}\n`);
+  } catch {}
+}
+
 // Download into a scratch dir and serve it on 127.0.0.1 so the browser saves (and lists) the files itself.
 async function handoff(url, opts) {
   const out = fs.mkdtempSync(path.join(os.tmpdir(), 'smc-out-'));
-  const result = await downloadMedia(url, { ...opts, outDir: out });
+  let result;
+  try {
+    result = await downloadMedia(url, { ...opts, outDir: out });
+  } catch (err) {
+    fs.rmSync(out, { recursive: true, force: true });
+    throw err;
+  }
   const files = result.files.filter((f) => fs.existsSync(f));
   const flat = fs.mkdtempSync(path.join(os.tmpdir(), 'smc-serve-'));
   const names = files.map((f, i) => {
@@ -50,16 +66,30 @@ async function handle(msg) {
   if (msg?.type !== 'download' || typeof msg.url !== 'string') return { ok: false, error: 'bad request' };
   let dir;
   try {
-    const opts = { cookiesFromBrowser: process.env.SMC_COOKIES_BROWSER };
+    // Progress goes back over the same port as {type:'progress'} messages, at most once a second.
+    let last = 0;
+    const onProgress = (percent) => {
+      const now = Date.now();
+      if (now - last < 1000 && percent < 100) return;
+      last = now;
+      send({ type: 'progress', percent });
+    };
+    const opts = { cookiesFromBrowser: process.env.SMC_COOKIES_BROWSER, onProgress };
+    log(`start ${msg.url}`);
     if (typeof msg.cookies === 'string' && msg.cookies) {
       dir = fs.mkdtempSync(path.join(os.tmpdir(), 'smc-'));
       opts.cookiesFile = path.join(dir, 'cookies.txt');
       fs.writeFileSync(opts.cookiesFile, msg.cookies, { mode: 0o600 });
     }
-    if (msg.handoff) return await handoff(msg.url, opts);
+    if (msg.handoff) {
+      const res = await handoff(msg.url, opts);
+      log(`ok ${msg.url} via ${res.via}`);
+      return res;
+    }
     const result = await downloadMedia(msg.url, opts);
     return { ok: true, via: result.engine, files: result.files };
   } catch (err) {
+    log(`fail ${msg.url} ${err.message.replace(/\s+/g, ' ')}`);
     return { ok: false, error: err.message };
   } finally {
     if (dir) fs.rmSync(dir, { recursive: true, force: true });
