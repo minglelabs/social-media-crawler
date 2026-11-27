@@ -7,13 +7,21 @@ const DEFAULT_OUT = path.join(os.homedir(), 'Downloads', 'SocialMediaCrawler');
 // Homebrew/pip bins are often missing from the PATH of GUI-launched processes (e.g. native messaging hosts).
 const EXTRA_PATH = ['/opt/homebrew/bin', '/usr/local/bin', path.join(os.homedir(), '.local/bin')];
 
-function run(cmd, args) {
+// onLine (optional) sees each stdout line as it arrives, for progress reporting.
+function run(cmd, args, onLine) {
   return new Promise((resolve) => {
     const env = { ...process.env, PATH: [process.env.PATH, ...EXTRA_PATH].filter(Boolean).join(':') };
     const child = spawn(cmd, args, { env });
     let stdout = '';
     let stderr = '';
-    child.stdout.on('data', (d) => (stdout += d));
+    let partial = '';
+    child.stdout.on('data', (d) => {
+      stdout += d;
+      if (!onLine) return;
+      const lines = (partial + d).split('\n');
+      partial = lines.pop();
+      lines.forEach(onLine);
+    });
     child.stderr.on('data', (d) => (stderr += d));
     child.on('error', (err) => resolve({ code: -1, stdout, stderr: String(err.message) }));
     child.on('close', (code) => resolve({ code, stdout, stderr }));
@@ -69,6 +77,8 @@ async function downloadWith(engine, url, opts) {
     const base = [
       '-o', path.join(outDir, '%(uploader)s_%(id)s.%(ext)s'),
       '--no-warnings', '--print', 'after_move:filepath',
+      // Progress lines ("SMC <percent>") on stdout, next to the printed file paths.
+      '--progress', '--newline', '--progress-template', 'download:SMC %(progress._percent_str)s',
       // A watch URL opened from a mix/playlist carries list=...; the user clicked one video, not the whole list.
       '--no-playlist',
       // Up to 1080p (4K is ~5x the size and minutes longer); at a given resolution prefer plain https over HLS
@@ -80,15 +90,21 @@ async function downloadWith(engine, url, opts) {
     // (age-restricted / members-only videos).
     const attempts = [[...base, ...cookieArgs(opts), url]];
     if (enginesFor(url).platform === 'youtube' && cookieArgs(opts).length) attempts.unshift([...base, url]);
+    // Video and audio are fetched one after the other, so the percentage restarts once; good enough for a toast.
+    const onLine = (line) => {
+      const m = /^SMC\s+([\d.]+)%/.exec(line.trim());
+      if (m && opts.onProgress) opts.onProgress(Number(m[1]));
+    };
+    const exec = (args) => run('yt-dlp', args, onLine);
     let r;
     for (const args of attempts) {
-      r = await run('yt-dlp', args);
+      r = await exec(args);
       // YouTube now and then hands out stream URLs that answer 403; a fresh extraction gets working ones.
-      for (let i = 0; i < 2 && r.code !== 0 && /HTTP Error 403/.test(r.stderr); i++) r = await run('yt-dlp', args);
+      for (let i = 0; i < 2 && r.code !== 0 && /HTTP Error 403/.test(r.stderr); i++) r = await exec(args);
       if (r.code === 0) break;
     }
     if (r.code !== 0) throw new Error(r.stderr.trim().split('\n').pop() || 'yt-dlp failed');
-    return r.stdout.split('\n').map((l) => l.trim()).filter(Boolean);
+    return r.stdout.split('\n').map((l) => l.trim()).filter((l) => l && !l.startsWith('SMC '));
   }
   const r = await run('gallery-dl', ['-D', outDir, ...cookieArgs(opts), url]);
   if (r.code !== 0) throw new Error(r.stderr.trim().split('\n').pop() || 'gallery-dl failed');

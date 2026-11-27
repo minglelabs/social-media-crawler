@@ -235,6 +235,11 @@ async function recordVideo(video) {
   a.click();
 }
 
+// Helper progress for the download in flight, so a long video visibly moves instead of looking stuck.
+chrome.runtime.onMessage.addListener((msg) => {
+  if (msg?.type === 'progress' && Number.isFinite(msg.percent)) notify(msg.percent >= 100 ? 'Finishing…' : `Downloading… ${Math.floor(msg.percent)}%`, { sticky: true });
+});
+
 button.addEventListener('click', async (e) => {
   e.preventDefault();
   e.stopPropagation();

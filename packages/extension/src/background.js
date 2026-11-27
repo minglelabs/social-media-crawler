@@ -78,10 +78,11 @@ async function saveDirect(url, filename) {
 }
 
 // A long-lived port (unlike sendNativeMessage) keeps the service worker alive while a long video downloads.
-function askHelper(msg) {
+function askHelper(msg, onProgress) {
   return new Promise((resolve) => {
     const port = chrome.runtime.connectNative(NATIVE_HOST);
     port.onMessage.addListener((res) => {
+      if (res?.type === 'progress') return onProgress?.(res.percent);
       resolve(res);
       port.disconnect();
     });
@@ -91,7 +92,7 @@ function askHelper(msg) {
   });
 }
 
-async function download(msg) {
+async function download(msg, tabId) {
   const platform = platformOf(msg.pageUrl);
   const direct = directUrl(msg);
   if (direct) {
@@ -103,7 +104,8 @@ async function download(msg) {
   // login cookies for the site (Instagram reels/stories, private posts) so the helper sees what the user sees.
   const url = msg.permalink ?? msg.pageUrl;
   const cookies = toNetscape(await chrome.cookies.getAll({ domain: registrableDomain(url) }));
-  const res = await askHelper({ type: 'download', url, cookies, handoff: true });
+  const progress = (percent) => tabId != null && chrome.tabs.sendMessage(tabId, { type: 'progress', percent }).catch(() => {});
+  const res = await askHelper({ type: 'download', url, cookies, handoff: true }, progress);
   if (!res?.ok || !res.serve) return res;
   // The helper serves what it fetched on localhost; saving it through the browser puts it in the download list.
   for (const f of res.serve) {
@@ -113,13 +115,13 @@ async function download(msg) {
   return { ok: true, via: res.via };
 }
 
-async function handle(msg) {
-  const res = await download(msg);
+async function handle(msg, tabId) {
+  const res = await download(msg, tabId);
   return res?.ok ? { ...res, nudge: await maybeNudge() } : res;
 }
 
-chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg?.type !== 'download') return false;
-  handle(msg).then(sendResponse, (err) => sendResponse({ ok: false, error: String(err.message ?? err) }));
+  handle(msg, sender.tab?.id).then(sendResponse, (err) => sendResponse({ ok: false, error: String(err.message ?? err) }));
   return true;
 });
