@@ -255,7 +255,9 @@ button.addEventListener('click', async (e) => {
     return;
   }
   const el = target;
-  const permalink = el.closest('article, [data-pressable-container], [role="article"]')?.querySelector(PERMALINK)?.href;
+  // A grid thumbnail (profile pages) is wrapped in its own post link; inside a feed post, look the link up.
+  const permalink = el.closest(PERMALINK)?.href
+    ?? el.closest('article, [data-pressable-container], [role="article"]')?.querySelector(PERMALINK)?.href;
   notify('Downloading… long videos can take a few minutes', { sticky: true });
   // A cover image on a video link (TikTok/YouTube/Reels grids) stands for the video, not for the picture itself.
   const isVideo = el instanceof HTMLVideoElement || VIDEO_LINK.test(permalink ?? '');

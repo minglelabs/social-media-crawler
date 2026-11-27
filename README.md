@@ -9,6 +9,7 @@ plus a tool-calling harness (MCP server + CLI) so agents can do the same without
 Platforms change their UI all the time; we track those changes and ship fixes continuously. Full history: [CHANGELOG.md](CHANGELOG.md) · [Releases](https://github.com/minglelabs/social-media-crawler/releases)
 
 <!-- LATEST-UPDATES:START -->
+- **2026-11-27** — fix(instagram): reels in a profile grid download as video, not their cover image
 - **2026-11-27** — fix(x): videos that gallery-dl returns no results for now fall back to yt-dlp instead of failing
 - **2026-11-27** — fix(youtube): "Requested format is not available" after YouTube's player change; the helper now updates yt-dlp by itself when that happens
 - **2026-11-27** — fix(extension): no more "reading 'sendMessage'" after an update; open tabs get the new overlay without a refresh
@@ -16,7 +17,6 @@ Platforms change their UI all the time; we track those changes and ship fixes co
 - **2026-11-23** — fix(threads): videos download again; the overlay now reads the player's original mp4 instead of the blob stream
 - **2026-11-19** — fix(extension): place the download button only where it is actually visible, never under headers, viewers or clipped edges
 - **2026-11-19** — fix(youtube): downloads no longer stall at 403 when you are signed in to YouTube
-- **2026-11-19** — fix(youtube): save up to 1080p H.264 mp4 for fast, playable downloads; screen recording fallback only on LinkedIn
 <!-- LATEST-UPDATES:END -->
 
 ## Packages
