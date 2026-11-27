@@ -1,5 +1,7 @@
 // One overlay button for every image/video on the page. No other choices are shown to the user.
-const MIN_SIZE = 160;
+// Small icons and avatars are not media worth a button; narrow grid thumbnails (TikTok ~150px wide) are.
+const MIN_SIDE = 100;
+const MIN_LONG_SIDE = 160;
 const SKIP_ALT = /profile|avatar|프로필|プロフィール/i;
 const VIDEO_LINK = /\/(video|reel|reels|shorts)\/|watch\?v=/;
 const PERMALINK = 'a[href*="/post/"], a[href*="/p/"], a[href*="/reel/"], a[href*="/status/"], a[href*="/video/"], a[href*="/pin/"], a[href*="watch?v="], a[href*="/shorts/"], a[href*="/feed/update/"], a[href*="/posts/"]';
@@ -66,7 +68,7 @@ function isMedia(el) {
   if (!(el instanceof HTMLImageElement || el instanceof HTMLVideoElement)) return false;
   if (inMessenger(el)) return false;
   const r = el.getBoundingClientRect();
-  if (r.width < MIN_SIZE || r.height < MIN_SIZE) return false;
+  if (Math.min(r.width, r.height) < MIN_SIDE || Math.max(r.width, r.height) < MIN_LONG_SIDE) return false;
   if (el instanceof HTMLImageElement && SKIP_ALT.test(el.alt || '')) return false;
   return Boolean(mediaSource(el)) || el instanceof HTMLVideoElement;
 }

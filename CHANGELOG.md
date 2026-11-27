@@ -2,6 +2,7 @@
 
 ## 2026-11-27
 
+- fix(tiktok): download button shows on narrow profile-grid thumbnails again
 - fix(instagram): reels in a profile grid download as video, not their cover image
 - fix(x): videos that gallery-dl returns no results for now fall back to yt-dlp instead of failing
 - fix(youtube): "Requested format is not available" after YouTube's player change; the helper now updates yt-dlp by itself when that happens
