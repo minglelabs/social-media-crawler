@@ -154,7 +154,12 @@ export const listMedia = (url, opts = {}) =>
   withFallback(url, opts, async (engine) => ({ items: await listWith(engine, url, opts) }));
 
 export const downloadMedia = (url, opts = {}) =>
-  withFallback(url, opts, async (engine) => ({ files: await downloadWith(engine, url, opts) }));
+  withFallback(url, opts, async (engine) => {
+    const files = await downloadWith(engine, url, opts);
+    // gallery-dl exits 0 with "No results" for some posts (e.g. X videos); let the next engine try.
+    if (!files.length) throw new Error('no files');
+    return { files };
+  });
 
 export async function doctor() {
   const check = async (cmd, args) => {
