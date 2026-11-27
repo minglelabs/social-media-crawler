@@ -2,6 +2,7 @@
 
 ## 2026-11-27
 
+- fix(extension): no more "reading 'sendMessage'" after an update; open tabs get the new overlay without a refresh
 - feat(youtube): show download progress in the toast; the helper logs failures to ~/Library/Logs/SocialMediaCrawler/helper.log
 
 ## 2026-11-23

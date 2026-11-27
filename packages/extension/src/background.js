@@ -125,3 +125,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   handle(msg, sender.tab?.id).then(sendResponse, (err) => sendResponse({ ok: false, error: String(err.message ?? err) }));
   return true;
 });
+
+// Content scripts only load on page load, so tabs opened before an install/update would keep a dead copy
+// ("Cannot read properties of undefined (reading 'sendMessage')"). Inject the current scripts into them.
+chrome.runtime.onInstalled.addListener(async () => {
+  for (const cs of chrome.runtime.getManifest().content_scripts ?? []) {
+    const tabs = await chrome.tabs.query({ url: cs.matches });
+    for (const tab of tabs) {
+      chrome.scripting
+        .executeScript({ target: { tabId: tab.id }, files: cs.js, world: cs.world ?? 'ISOLATED' })
+        .catch(() => {}); // discarded / not yet loaded tabs pick the scripts up on their next load
+    }
+  }
+});
