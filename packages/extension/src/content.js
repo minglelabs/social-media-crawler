@@ -4,7 +4,13 @@ const SKIP_ALT = /profile|avatar|프로필|プロフィール/i;
 const VIDEO_LINK = /\/(video|reel|reels|shorts)\/|watch\?v=/;
 const PERMALINK = 'a[href*="/post/"], a[href*="/p/"], a[href*="/reel/"], a[href*="/status/"], a[href*="/video/"], a[href*="/pin/"], a[href*="watch?v="], a[href*="/shorts/"], a[href*="/feed/update/"], a[href*="/posts/"]';
 
+// After an extension update the copy of this script already in the tab is cut off from the extension
+// (chrome.runtime is gone) and the background injects a fresh one; the new copy removes the old overlay, and
+// the old copy stops reacting once its overlay is gone.
+document.querySelectorAll('[data-smc-overlay]').forEach((n) => n.remove());
 const host = document.createElement('div');
+host.setAttribute('data-smc-overlay', '');
+const alive = () => host.isConnected && Boolean(chrome.runtime?.id);
 host.style.cssText = 'position:fixed;inset:0;z-index:2147483647;pointer-events:none';
 const shadow = host.attachShadow({ mode: 'closed' });
 shadow.innerHTML = `
@@ -174,7 +180,7 @@ function hide() {
 
 let ticking = false;
 document.addEventListener('mousemove', (e) => {
-  if (ticking) return;
+  if (ticking || !alive()) return;
   ticking = true;
   requestAnimationFrame(() => {
     ticking = false;
@@ -244,6 +250,10 @@ button.addEventListener('click', async (e) => {
   e.preventDefault();
   e.stopPropagation();
   if (!target) return;
+  if (!alive()) {
+    notify('The extension was updated. Refresh this page and try again.');
+    return;
+  }
   const el = target;
   const permalink = el.closest('article, [data-pressable-container], [role="article"]')?.querySelector(PERMALINK)?.href;
   notify('Downloading… long videos can take a few minutes', { sticky: true });
