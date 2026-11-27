@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { PLATFORMS, detectPlatform } from './platforms.js';
@@ -26,6 +27,24 @@ function run(cmd, args, onLine) {
     child.on('error', (err) => resolve({ code: -1, stdout, stderr: String(err.message) }));
     child.on('close', (code) => resolve({ code, stdout, stderr }));
   });
+}
+
+// When a site changes its player (YouTube's signature/"n" challenge), yt-dlp fails until it is updated, and
+// upstream usually ships the fix within days. On such an error update yt-dlp once (at most every 6 hours) and
+// retry, so users do not have to know about yt-dlp at all.
+const STALE_YTDLP = /Requested format is not available|challenge solving failed|[Ss]ignature extraction failed|Unable to extract|Please report this issue/;
+const UPDATE_STAMP = path.join(os.tmpdir(), 'smc-ytdlp-update');
+async function updateYtDlp() {
+  try {
+    if (Date.now() - fs.statSync(UPDATE_STAMP).mtimeMs < 6 * 3600 * 1000) return false;
+  } catch {}
+  fs.writeFileSync(UPDATE_STAMP, '');
+  const before = (await run('yt-dlp', ['--version'])).stdout.trim();
+  const which = (await run('/usr/bin/which', ['yt-dlp'])).stdout;
+  // Homebrew builds refuse "yt-dlp -U"; everything else (standalone binary, pip) supports it.
+  if (/homebrew|Cellar|linuxbrew/.test(which)) await run('brew', ['upgrade', 'yt-dlp']);
+  else await run('yt-dlp', ['-U']);
+  return (await run('yt-dlp', ['--version'])).stdout.trim() !== before;
 }
 
 // A cookies.txt (Netscape format) handed over by the extension wins over reading a browser's cookie store.
@@ -102,6 +121,12 @@ async function downloadWith(engine, url, opts) {
       // YouTube now and then hands out stream URLs that answer 403; a fresh extraction gets working ones.
       for (let i = 0; i < 2 && r.code !== 0 && /HTTP Error 403/.test(r.stderr); i++) r = await exec(args);
       if (r.code === 0) break;
+    }
+    if (r.code !== 0 && STALE_YTDLP.test(r.stderr) && (await updateYtDlp())) {
+      for (const args of attempts) {
+        r = await exec(args);
+        if (r.code === 0) break;
+      }
     }
     if (r.code !== 0) throw new Error(r.stderr.trim().split('\n').pop() || 'yt-dlp failed');
     return r.stdout.split('\n').map((l) => l.trim()).filter((l) => l && !l.startsWith('SMC '));
