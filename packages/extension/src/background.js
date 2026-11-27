@@ -92,16 +92,29 @@ function askHelper(msg, onProgress) {
   });
 }
 
+// Facebook shows photos as small resized copies (a grid thumbnail is ~400px); the photo page itself has the
+// original, which the helper (gallery-dl) can fetch. Try that first and keep the on-screen copy as a fallback.
+const FB_PHOTO = /facebook\.com\/(photo\.php|photo\/\?)/;
+
 async function download(msg, tabId) {
   const platform = platformOf(msg.pageUrl);
   const direct = directUrl(msg);
+  if (direct && msg.kind === 'image' && FB_PHOTO.test(msg.permalink ?? '')) {
+    const res = await viaHelper(msg, platform, tabId);
+    if (res?.ok) return res;
+    return saveDirect(direct, filenameFor(direct, platform, msg.kind));
+  }
   if (direct) {
     const res = await saveDirect(direct, filenameFor(direct, platform, msg.kind));
     if (res.ok) return res;
     // The browser refused or the CDN rejected the request; the helper can still fetch the post itself.
   }
-  // Streams/blob media: hand the post URL to the local yt-dlp/gallery-dl helper, together with this browser's
-  // login cookies for the site (Instagram reels/stories, private posts) so the helper sees what the user sees.
+  return viaHelper(msg, platform, tabId);
+}
+
+// Streams/blob media: hand the post URL to the local yt-dlp/gallery-dl helper, together with this browser's
+// login cookies for the site (Instagram reels/stories, private posts) so the helper sees what the user sees.
+async function viaHelper(msg, platform, tabId) {
   const url = msg.permalink ?? msg.pageUrl;
   const cookies = toNetscape(await chrome.cookies.getAll({ domain: registrableDomain(url) }));
   const progress = (percent) => tabId != null && chrome.tabs.sendMessage(tabId, { type: 'progress', percent }).catch(() => {});

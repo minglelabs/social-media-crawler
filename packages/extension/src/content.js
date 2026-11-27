@@ -4,7 +4,7 @@ const MIN_SIDE = 100;
 const MIN_LONG_SIDE = 160;
 const SKIP_ALT = /profile|avatar|프로필|プロフィール/i;
 const VIDEO_LINK = /\/(video|reel|reels|shorts)\/|watch\?v=/;
-const PERMALINK = 'a[href*="/post/"], a[href*="/p/"], a[href*="/reel/"], a[href*="/status/"], a[href*="/video/"], a[href*="/pin/"], a[href*="watch?v="], a[href*="/shorts/"], a[href*="/feed/update/"], a[href*="/posts/"]';
+const PERMALINK = 'a[href*="/post/"], a[href*="/p/"], a[href*="/reel/"], a[href*="/status/"], a[href*="/video/"], a[href*="/pin/"], a[href*="watch?v="], a[href*="/shorts/"], a[href*="/feed/update/"], a[href*="/posts/"], a[href*="photo.php"], a[href*="/photo/?fbid"]';
 
 // After an extension update the copy of this script already in the tab is cut off from the extension
 // (chrome.runtime is gone) and the background injects a fresh one; the new copy removes the old overlay, and
